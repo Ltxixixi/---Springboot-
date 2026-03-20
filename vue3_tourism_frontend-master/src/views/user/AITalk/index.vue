@@ -42,9 +42,17 @@
         @keyup.enter="sendMessage"
       >
       </el-input>
-      <el-button type="primary" @click="sendMessage" :loading="isLoading"
-        >发送
-      </el-button>
+      <div class="action-buttons">
+        <el-button type="primary" @click="sendMessage" :loading="isLoading"
+          >发送
+        </el-button>
+        <el-button
+          type="success"
+          @click="sendMultiAgentPlan"
+          :loading="isLoading"
+          >协作规划
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -55,6 +63,7 @@ import { GET_AVATAR, GET_ID } from "@/utils/token";
 import { MdPreview } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 import { addUserAiMessageUsingPost } from "@/api/userAiMessageController";
+import { generateTourismMultiAgentPlanUsingPost } from "@/api/tourismAgentController";
 import { ElMessage } from "element-plus";
 
 // 消息类型
@@ -113,6 +122,48 @@ const sendMessage = async () => {
   // 滚动到底部
   scrollToBottom();
   inputMessage.value = "";
+};
+
+const sendMultiAgentPlan = async () => {
+  if (!inputMessage.value.trim()) {
+    return;
+  }
+  isLoading.value = true;
+  sseMessages.value.push({ role: "user", content: inputMessage.value });
+  scrollToBottom();
+  sseMessages.value.push({ role: "bot", content: "" });
+  try {
+    const res = await generateTourismMultiAgentPlanUsingPost({
+      userInputText: inputMessage.value,
+      recommendSize: 6
+    });
+    if (res.code !== 200) {
+      sseMessages.value.pop();
+      ElMessage.error(res.message || "多智能协作规划失败");
+      return;
+    }
+    const result = res.data;
+    const lastMessage = sseMessages.value[sseMessages.value.length - 1];
+    const workflowText = (result.workflowSummary || [])
+      .map((item: string) => `- ${item}`)
+      .join("\n");
+    const botContent = [
+      result.explanationMarkdown || "",
+      workflowText ? `\n### 协作流程\n${workflowText}` : ""
+    ].join("\n");
+    if (lastMessage && lastMessage.role === "bot") {
+      lastMessage.content = botContent;
+    } else {
+      sseMessages.value.push({ role: "bot", content: botContent });
+    }
+    inputMessage.value = "";
+    scrollToBottom();
+  } catch (error: any) {
+    sseMessages.value.pop();
+    ElMessage.error(error?.message || "多智能协作规划失败");
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 // 滚动到底部
@@ -187,6 +238,12 @@ onMounted(() => {
 
 .chat-input {
   display: flex;
+  gap: 10px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 </style>

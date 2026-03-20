@@ -256,12 +256,24 @@ public class SpotRouteServiceImpl extends ServiceImpl<SpotRouteMapper, SpotRoute
                 .map(String::trim)
                 .distinct()
                 .collect(Collectors.toList());
+        List<Long> candidateSpotIdList = CollUtil.emptyIfNull(spotRoutePlanRequest.getCandidateSpotIdList()).stream()
+                .filter(ObjectUtils::isNotEmpty)
+                .distinct()
+                .collect(Collectors.toList());
 
         List<Spot> openSpotList = spotService.list(new QueryWrapper<Spot>()
                 .eq("spotStatus", 1)
                 .orderByDesc("viewNum")
                 .orderByDesc("favourNum"));
         ThrowUtils.throwIf(CollUtil.isEmpty(openSpotList), ErrorCode.NOT_FOUND_ERROR, "暂无可规划景点");
+
+        if (CollUtil.isNotEmpty(candidateSpotIdList)) {
+            Set<Long> candidateSpotIdSet = new LinkedHashSet<>(candidateSpotIdList);
+            openSpotList = openSpotList.stream()
+                    .filter(spot -> candidateSpotIdSet.contains(spot.getId()))
+                    .collect(Collectors.toList());
+            ThrowUtils.throwIf(CollUtil.isEmpty(openSpotList), ErrorCode.NOT_FOUND_ERROR, "候选景点不足，无法规划路线");
+        }
 
         List<Spot> candidateSpotList = openSpotList.stream()
                 .filter(spot -> matchLocation(spot, targetLocation))
