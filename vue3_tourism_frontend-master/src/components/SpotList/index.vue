@@ -14,6 +14,9 @@
               <div class="description">
                 {{ item.spotLocation }}
               </div>
+              <div v-if="item.recommendReason" class="recommend-reason">
+                {{ item.recommendReason }}
+              </div>
               <div class="tags">
                 <el-tag
                   v-for="tag in item.spotTagList"
@@ -86,6 +89,12 @@ const goSpotDetail = (id: number) => {
 
 .spot-list .tags {
   margin: 10px 0 0 10px;
+}
+
+.spot-list .recommend-reason {
+  margin: 10px 0 0 10px;
+  color: #409eff;
+  font-size: 13px;
 }
 
 .spot-list .stats {

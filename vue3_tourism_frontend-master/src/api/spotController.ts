@@ -117,6 +117,22 @@ export async function getTop10SpotsByViewsUsingGet(options?: {
   });
 }
 
+/** getRecommendSpots GET /api/spot/recommend */
+export async function getRecommendSpotsUsingGet(
+  params?: {
+    size?: number;
+  },
+  options?: { [key: string]: any }
+) {
+  return request<any>("/api/spot/recommend", {
+    method: "GET",
+    params: {
+      ...params
+    },
+    ...(options || {})
+  });
+}
+
 /** updateSpot POST /api/spot/update */
 export async function updateSpotUsingPost(
   body: API.SpotUpdateRequest,

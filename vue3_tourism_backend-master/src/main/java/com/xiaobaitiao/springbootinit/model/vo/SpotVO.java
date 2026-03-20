@@ -69,6 +69,11 @@ public class SpotVO implements Serializable {
     private Integer spotStatus;
 
     /**
+     * 推荐理由
+     */
+    private String recommendReason;
+
+    /**
      * 创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")

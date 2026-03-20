@@ -53,4 +53,13 @@ public interface SpotService extends IService<Spot> {
     Page<SpotVO> getSpotVOPage(Page<Spot> spotPage, HttpServletRequest request);
 
     List<Spot> getTop10SpotsByViews();
+
+    /**
+     * 获取推荐景点列表
+     *
+     * @param size 推荐数量
+     * @param request 请求
+     * @return 推荐景点
+     */
+    List<SpotVO> getRecommendSpotVOList(Integer size, HttpServletRequest request);
 }

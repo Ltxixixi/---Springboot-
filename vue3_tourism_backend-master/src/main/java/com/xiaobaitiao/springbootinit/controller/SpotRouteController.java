@@ -12,10 +12,12 @@ import com.xiaobaitiao.springbootinit.exception.BusinessException;
 import com.xiaobaitiao.springbootinit.exception.ThrowUtils;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteAddRequest;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteEditRequest;
+import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRoutePlanRequest;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteQueryRequest;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteUpdateRequest;
 import com.xiaobaitiao.springbootinit.model.entity.SpotRoute;
 import com.xiaobaitiao.springbootinit.model.entity.User;
+import com.xiaobaitiao.springbootinit.model.vo.SpotRoutePlanVO;
 import com.xiaobaitiao.springbootinit.model.vo.SpotRouteVO;
 import com.xiaobaitiao.springbootinit.service.SpotRouteService;
 import com.xiaobaitiao.springbootinit.service.UserService;
@@ -211,6 +213,20 @@ public class SpotRouteController {
                 spotRouteService.getQueryWrapper(spotRouteQueryRequest));
         // 获取封装类
         return ResultUtils.success(spotRouteService.getSpotRouteVOPage(spotRoutePage, request));
+    }
+
+    /**
+     * 智能路线规划
+     *
+     * @param spotRoutePlanRequest 规划请求
+     * @param request 请求
+     * @return 规划结果
+     */
+    @PostMapping("/plan/generate")
+    public BaseResponse<SpotRoutePlanVO> generateRoutePlan(@RequestBody SpotRoutePlanRequest spotRoutePlanRequest,
+                                                           HttpServletRequest request) {
+        ThrowUtils.throwIf(spotRoutePlanRequest == null, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(spotRouteService.generateRoutePlan(spotRoutePlanRequest, request));
     }
     // endregion
 }

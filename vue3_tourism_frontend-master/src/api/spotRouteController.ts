@@ -98,6 +98,26 @@ export async function listMySpotRouteVoByPageUsingPost(
   );
 }
 
+/** generateRoutePlan POST /api/spotRoute/plan/generate */
+export async function generateRoutePlanUsingPost(
+  body: {
+    dayCount: number;
+    budget?: number;
+    spotLocation?: string;
+    spotTagList?: string[];
+  },
+  options?: { [key: string]: any }
+) {
+  return request<any>("/api/spotRoute/plan/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    data: body,
+    ...(options || {})
+  });
+}
+
 /** updateSpotRoute POST /api/spotRoute/update */
 export async function updateSpotRouteUsingPost(
   body: API.SpotRouteUpdateRequest,

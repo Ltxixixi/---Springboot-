@@ -259,5 +259,18 @@ public class SpotController {
     public BaseResponse<List<Spot>> getTop10SpotsByViews() {
         return ResultUtils.success(spotService.getTop10SpotsByViews());
     }
+
+    /**
+     * 获取推荐景点列表
+     *
+     * @param size 推荐数量
+     * @param request 请求
+     * @return 推荐景点列表
+     */
+    @GetMapping("/recommend")
+    public BaseResponse<List<SpotVO>> getRecommendSpots(@RequestParam(required = false) Integer size,
+                                                        HttpServletRequest request) {
+        return ResultUtils.success(spotService.getRecommendSpotVOList(size, request));
+    }
     // endregion
 }
