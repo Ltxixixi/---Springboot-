@@ -1,6 +1,5 @@
 package com.xiaobaitiao.springbootinit.controller;
 
-import cn.hutool.core.date.StopWatch;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xiaobaitiao.springbootinit.annotation.AuthCheck;
 import com.xiaobaitiao.springbootinit.common.BaseResponse;
@@ -10,33 +9,31 @@ import com.xiaobaitiao.springbootinit.common.ResultUtils;
 import com.xiaobaitiao.springbootinit.constant.UserConstant;
 import com.xiaobaitiao.springbootinit.exception.BusinessException;
 import com.xiaobaitiao.springbootinit.exception.ThrowUtils;
-import com.xiaobaitiao.springbootinit.manager.SparkClient;
-import com.xiaobaitiao.springbootinit.manager.model.SparkMessage;
-import com.xiaobaitiao.springbootinit.manager.model.SparkSyncChatResponse;
-import com.xiaobaitiao.springbootinit.manager.model.request.SparkRequest;
-import com.xiaobaitiao.springbootinit.manager.model.response.SparkTextUsage;
+import com.xiaobaitiao.springbootinit.manager.TourismAiClient;
 import com.xiaobaitiao.springbootinit.model.dto.userAiMessage.UserAiMessageAddRequest;
 import com.xiaobaitiao.springbootinit.model.dto.userAiMessage.UserAiMessageEditRequest;
 import com.xiaobaitiao.springbootinit.model.dto.userAiMessage.UserAiMessageQueryRequest;
 import com.xiaobaitiao.springbootinit.model.dto.userAiMessage.UserAiMessageUpdateRequest;
 import com.xiaobaitiao.springbootinit.model.entity.Spot;
-import com.xiaobaitiao.springbootinit.model.entity.UserAiMessage;
 import com.xiaobaitiao.springbootinit.model.entity.User;
+import com.xiaobaitiao.springbootinit.model.entity.UserAiMessage;
 import com.xiaobaitiao.springbootinit.model.vo.UserAiMessageVO;
 import com.xiaobaitiao.springbootinit.service.SpotService;
 import com.xiaobaitiao.springbootinit.service.UserAiMessageService;
 import com.xiaobaitiao.springbootinit.service.UserService;
 import com.xiaobaitiao.springbootinit.utils.WordUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -57,14 +54,7 @@ public class UserAiMessageController {
     @Resource
     private UserService userService;
     @Resource
-    private ThreadPoolExecutor threadPoolExecutor;
-    SparkClient sparkClient = new SparkClient();
-
-    {
-        sparkClient.appid = "xxxxxxxxxxxxxxxxxxxxxx";
-        sparkClient.apiKey = "xxxxxxxxxxxxxxxxxxxxxx";
-        sparkClient.apiSecret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-    }
+    private TourismAiClient tourismAiClient;
 
     // region 增删改查
 
@@ -79,65 +69,15 @@ public class UserAiMessageController {
     public BaseResponse<UserAiMessage> addUserAiMessage(@RequestBody UserAiMessageAddRequest userAiMessageAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(userAiMessageAddRequest == null, ErrorCode.PARAMS_ERROR);
         String userInputText = userAiMessageAddRequest.getUserInputText();
-        if (WordUtils.containsForbiddenWords(userInputText)){
+        if (WordUtils.containsForbiddenWords(userInputText)) {
             ThrowUtils.throwIf(WordUtils.containsForbiddenWords(userInputText), ErrorCode.WORD_FORBIDDEN_ERROR, "包含违禁词");
         }
         UserAiMessage userAiMessage = new UserAiMessage();
         // 填充默认值
         User loginUser = userService.getLoginUser(request);
-        Integer aiRemainNumber = loginUser.getAiRemainNumber();
-        // 检查用户余额是否足够，如果不足，直接返回错误信息
-        ThrowUtils.throwIf(aiRemainNumber <= 0, ErrorCode.USER_BALANCE_NOT_ENOUGH);
         userAiMessage.setUserId(loginUser.getId());
         userAiMessage.setUserInputText(userInputText);
-        StringBuilder presetInformation = new StringBuilder("你是一个旅游景点的推荐官，请根据用户的喜好信息，从数据库中选择某几个景点，最多选择三个景点，给用户概述（注意简短），并给他做一个路线的推荐。\n" +
-                "以下是数据库里面包含的景点：");
-        List<String> spotNameList = spotService.list().stream().map(Spot::getSpotName).collect(Collectors.toList());
-        for (String s : spotNameList) {
-            presetInformation.append(s).append(" ");
-        }
-        presetInformation.append("\n用户喜好信息如下：");
-        List<SparkMessage> messages = new ArrayList<>();
-        messages.add(SparkMessage.userContent(presetInformation+userInputText));
-        String response = "";
-        int timeout = 40; // 超时时间，单位为秒
-        // 构造请求
-        SparkRequest sparkRequest = SparkRequest.builder()
-                // 模型回答的tokens的最大长度,非必传，默认为2048。
-                // V1.5取值为[1,4096]
-                // V2.0取值为[1,8192]
-                // V3.0取值为[1,8192]
-                .maxTokens(2048)
-                .messages(messages)
-                // 核采样阈值。用于决定结果随机性,取值越高随机性越强即相同的问题得到的不同答案的可能性越高 非必传,取值为[0,1],默认为0.5
-                .temperature(0.2)
-                .build();
-        Future<String> future = threadPoolExecutor.submit(() -> {
-            try {
-                // 同步调用
-                StopWatch stopWatch = new StopWatch();
-                stopWatch.start();
-                SparkSyncChatResponse chatResponse = sparkClient.chatSync(sparkRequest);
-                SparkTextUsage textUsage = chatResponse.getTextUsage();
-                stopWatch.stop();
-                long total = stopWatch.getTotal(TimeUnit.SECONDS);
-                System.out.println("本次接口调用耗时:" + total + "秒");
-                System.out.println("\n回答：" + chatResponse.getContent());
-                System.out.println("\n提问tokens：" + textUsage.getPromptTokens()
-                        + "，回答tokens：" + textUsage.getCompletionTokens()
-                        + "，总消耗tokens：" + textUsage.getTotalTokens());
-                return chatResponse.getContent();
-//                return AlibabaAIModel.doChatWithHistory(stringBuilder.toString(),recentHistory);
-            } catch (Exception exception) {
-                throw new RuntimeException("遇到异常");
-            }
-        });
-        try {
-            response = future.get(timeout, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.info("服务器接口调用超时");
-        }
-        System.out.println(response);
+        String response = tourismAiClient.chat(buildUserPrompt(userInputText));
         userAiMessageAddRequest.setAiGenerateText(response);
 
         // 复制属性
@@ -150,13 +90,25 @@ public class UserAiMessageController {
         // 插入数据库
         boolean result = userAiMessageService.save(userAiMessage);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        // 更新用户 AI 调用余额
-        loginUser.setAiRemainNumber(aiRemainNumber-1);
-        boolean update = userService.updateById(loginUser);
-        ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR);
         long newUserAiMessageId = userAiMessage.getId();
         UserAiMessage generateAnswer = userAiMessageService.getById(newUserAiMessageId);
         return ResultUtils.success(generateAnswer);
+    }
+
+    private String buildUserPrompt(String userInputText) {
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("你是一个旅游景点推荐官，请根据用户喜好，从下列景点中选择最多三个景点，");
+        promptBuilder.append("先给出简短推荐理由，再给出简洁路线建议，使用中文回答。\n");
+        promptBuilder.append("当前景点库：");
+        List<String> spotNameList = spotService.list().stream()
+                .map(Spot::getSpotName)
+                .filter(StringUtils::isNotBlank)
+                .limit(80)
+                .collect(Collectors.toList());
+        promptBuilder.append(String.join("、", spotNameList));
+        promptBuilder.append("\n用户喜好信息：");
+        promptBuilder.append(StringUtils.defaultString(userInputText));
+        return promptBuilder.toString();
     }
 
 

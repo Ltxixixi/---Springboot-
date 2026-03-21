@@ -80,14 +80,24 @@ const inputMessage = ref("");
 const messagesRef = ref<HTMLElement | null>(null);
 // SSE消息
 const sseMessages = ref<Message[]>([]);
+
+const extractErrorMessage = (error: any, fallback: string) => {
+  return error?.response?.data?.message || error?.message || fallback;
+};
+
 // 发送消息
 const sendMessage = async () => {
+  console.log("[AITalk] sendMessage triggered", inputMessage.value);
   isLoading.value = true;
   ElMessage.success({
     duration: 3000,
     message: "人多时，AI 接口调用缓慢，一般为 15-30 秒，注意等待"
   });
-  if (!inputMessage.value.trim()) return;
+  if (!inputMessage.value.trim()) {
+    console.warn("[AITalk] input is empty");
+    isLoading.value = false;
+    return;
+  }
 
   // 添加用户消息
   sseMessages.value.push({ role: "user", content: inputMessage.value });
@@ -97,35 +107,48 @@ const sendMessage = async () => {
   // 添加机器人消息占位符
   sseMessages.value.push({ role: "bot", content: "" });
 
-  // 调用后端接口获取数据
-  const res = await addUserAiMessageUsingPost({
-    userInputText: inputMessage.value,
-    userId: GET_ID()
-  });
-  if (res.code !== 200) {
-    isLoading.value = false;
-    inputMessage.value = "";
-    sseMessages.value.pop();
-    return ElMessage.error({
-      duration: 2500,
-      message: res.message || "调用 AI 接口失败"
+  try {
+    console.log("[AITalk] requesting /api/userAiMessage/add", {
+      userInputText: inputMessage.value,
+      userId: GET_ID()
     });
+    const res = await addUserAiMessageUsingPost({
+      userInputText: inputMessage.value,
+      userId: GET_ID()
+    });
+    console.log("[AITalk] /api/userAiMessage/add response", res);
+    if (res.code !== 200) {
+      sseMessages.value.pop();
+      return ElMessage.error({
+        duration: 3500,
+        message: res.message || "调用 AI 接口失败"
+      });
+    }
+    // 更新现有的 bot 消息内容
+    const lastMessage = sseMessages.value[sseMessages.value.length - 1];
+    if (lastMessage && lastMessage.role === "bot") {
+      lastMessage.content += res.data.aiGenerateText;
+    } else {
+      sseMessages.value.push({ role: "bot", content: res.data.aiGenerateText });
+    }
+    scrollToBottom();
+    inputMessage.value = "";
+  } catch (error: any) {
+    sseMessages.value.pop();
+    ElMessage.error({
+      duration: 5000,
+      message: extractErrorMessage(error, "调用 AI 接口失败")
+    });
+    console.error("[AITalk] /api/userAiMessage/add error", error);
+  } finally {
+    isLoading.value = false;
   }
-  // 更新现有的 bot 消息内容
-  const lastMessage = sseMessages.value[sseMessages.value.length - 1];
-  if (lastMessage && lastMessage.role === "bot") {
-    lastMessage.content += res.data.aiGenerateText; // 追加内容
-  } else {
-    sseMessages.value.push({ role: "bot", content: res.data.aiGenerateText });
-  }
-  isLoading.value = false;
-  // 滚动到底部
-  scrollToBottom();
-  inputMessage.value = "";
 };
 
 const sendMultiAgentPlan = async () => {
+  console.log("[AITalk] sendMultiAgentPlan triggered", inputMessage.value);
   if (!inputMessage.value.trim()) {
+    console.warn("[AITalk] multi-agent input is empty");
     return;
   }
   isLoading.value = true;
@@ -133,10 +156,15 @@ const sendMultiAgentPlan = async () => {
   scrollToBottom();
   sseMessages.value.push({ role: "bot", content: "" });
   try {
+    console.log("[AITalk] requesting /api/tourismAgent/plan", {
+      userInputText: inputMessage.value,
+      recommendSize: 6
+    });
     const res = await generateTourismMultiAgentPlanUsingPost({
       userInputText: inputMessage.value,
       recommendSize: 6
     });
+    console.log("[AITalk] /api/tourismAgent/plan response", res);
     if (res.code !== 200) {
       sseMessages.value.pop();
       ElMessage.error(res.message || "多智能协作规划失败");
@@ -160,7 +188,8 @@ const sendMultiAgentPlan = async () => {
     scrollToBottom();
   } catch (error: any) {
     sseMessages.value.pop();
-    ElMessage.error(error?.message || "多智能协作规划失败");
+    ElMessage.error(extractErrorMessage(error, "多智能协作规划失败"));
+    console.error("[AITalk] /api/tourismAgent/plan error", error);
   } finally {
     isLoading.value = false;
   }

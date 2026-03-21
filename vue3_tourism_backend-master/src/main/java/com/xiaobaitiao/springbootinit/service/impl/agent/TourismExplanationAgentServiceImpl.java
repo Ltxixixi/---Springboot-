@@ -1,6 +1,7 @@
 package com.xiaobaitiao.springbootinit.service.impl.agent;
 
 import cn.hutool.core.collection.CollUtil;
+import com.xiaobaitiao.springbootinit.manager.TourismAiClient;
 import com.xiaobaitiao.springbootinit.model.vo.SpotRoutePlanDayVO;
 import com.xiaobaitiao.springbootinit.model.vo.SpotRoutePlanVO;
 import com.xiaobaitiao.springbootinit.model.vo.SpotVO;
@@ -9,8 +10,8 @@ import com.xiaobaitiao.springbootinit.service.agent.model.TourismAgentContext;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 讲解智能体实现
@@ -18,8 +19,59 @@ import java.util.stream.Collectors;
 @Service
 public class TourismExplanationAgentServiceImpl implements TourismExplanationAgentService {
 
+    @Resource
+    private TourismAiClient tourismAiClient;
+
     @Override
     public String explain(TourismAgentContext context, List<SpotVO> recommendationSpotList, SpotRoutePlanVO routePlan) {
+        if (tourismAiClient.isAvailable()) {
+            try {
+                return tourismAiClient.chat(buildUserPrompt(context, recommendationSpotList, routePlan));
+            } catch (Exception ignored) {
+            }
+        }
+        return buildFallbackExplanation(context, recommendationSpotList, routePlan);
+    }
+
+    private String buildUserPrompt(TourismAgentContext context, List<SpotVO> recommendationSpotList, SpotRoutePlanVO routePlan) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("请把下面的旅游推荐与路线结果整理成 Markdown，结构包含：需求理解、推荐理由、路线安排、出行建议。\n");
+        builder.append("用户需求：").append(context.getPreferenceSummary()).append("\n");
+        builder.append("推荐景点：\n");
+        if (CollUtil.isEmpty(recommendationSpotList)) {
+            builder.append("- 暂无明确推荐景点\n");
+        } else {
+            for (SpotVO spotVO : recommendationSpotList) {
+                builder.append("- ")
+                        .append(spotVO.getSpotName())
+                        .append("：")
+                        .append(StringUtils.defaultIfBlank(spotVO.getRecommendReason(), "综合推荐"))
+                        .append("\n");
+            }
+        }
+        builder.append("路线结果：\n");
+        builder.append("- 总景点数：").append(routePlan.getTotalSpotCount()).append("\n");
+        builder.append("- 预估总花费：").append(routePlan.getTotalEstimatedCost()).append(" 元\n");
+        if (CollUtil.isNotEmpty(routePlan.getSpotNameList())) {
+            builder.append("- 总体路线：").append(String.join(" -> ", routePlan.getSpotNameList())).append("\n");
+        }
+        if (CollUtil.isNotEmpty(routePlan.getDayPlanList())) {
+            for (SpotRoutePlanDayVO dayPlanVO : routePlan.getDayPlanList()) {
+                builder.append("- 第")
+                        .append(dayPlanVO.getDayNumber())
+                        .append("天：")
+                        .append(String.join(" -> ", dayPlanVO.getSpotNameList()))
+                        .append("，预估花费 ")
+                        .append(dayPlanVO.getEstimatedCost())
+                        .append(" 元，里程约 ")
+                        .append(String.format("%.2f", dayPlanVO.getTotalDistance()))
+                        .append(" 公里\n");
+            }
+        }
+        return builder.toString();
+    }
+
+    private String buildFallbackExplanation(TourismAgentContext context, List<SpotVO> recommendationSpotList, SpotRoutePlanVO routePlan) {
         StringBuilder builder = new StringBuilder();
         builder.append("## 多智能协作结果\n\n");
         builder.append("### 需求理解\n");

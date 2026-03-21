@@ -24,24 +24,27 @@ request.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    //处理网络错误
     let msg = "";
-    const code = error.response.code ?? 401;
+    const code = error?.response?.status;
+    const backendMessage = error?.response?.data?.message;
+    if (backendMessage) {
+      msg = backendMessage;
+    }
     switch (code) {
       case 401:
-        msg = "token过期";
+        msg = msg || "token过期";
         break;
       case 403:
-        msg = "无权访问";
+        msg = msg || "无权访问";
         break;
       case 404:
-        msg = "请求地址错误";
+        msg = msg || "请求地址错误";
         break;
       case 500:
-        msg = "服务器出现问题";
+        msg = msg || "服务器出现问题";
         break;
       default:
-        msg = "无网络";
+        msg = msg || error?.message || "无网络";
     }
     ElMessage({
       type: "error",

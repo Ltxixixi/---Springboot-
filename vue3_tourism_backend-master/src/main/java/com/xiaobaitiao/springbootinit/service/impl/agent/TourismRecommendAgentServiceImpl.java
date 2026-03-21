@@ -14,6 +14,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -70,8 +71,9 @@ public class TourismRecommendAgentServiceImpl implements TourismRecommendAgentSe
     }
 
     private String buildReason(SpotVO spotVO, TourismAgentContext context) {
-        List<String> matchedTagList = CollUtil.intersectionDistinct(CollUtil.emptyIfNull(spotVO.getSpotTagList()),
+        Set<String> matchedTagSet = CollUtil.intersectionDistinct(CollUtil.emptyIfNull(spotVO.getSpotTagList()),
                 CollUtil.emptyIfNull(context.getPreferredTagList()));
+        List<String> matchedTagList = new ArrayList<>(matchedTagSet);
         if (CollUtil.isNotEmpty(matchedTagList)) {
             return "推荐智能体识别到你偏好" + String.join("、", matchedTagList);
         }
