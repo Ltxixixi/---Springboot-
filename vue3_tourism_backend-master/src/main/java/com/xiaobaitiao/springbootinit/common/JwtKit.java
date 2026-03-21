@@ -4,12 +4,16 @@ package com.xiaobaitiao.springbootinit.common;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.xiaobaitiao.springbootinit.model.entity.User;
+import com.xiaobaitiao.springbootinit.model.vo.LoginUserVO;
 
 /**
  *
@@ -35,6 +39,23 @@ public class JwtKit {
         claims.put("username", user.toString());
         claims.put("createdate", new Date());
         claims.put("id", System.currentTimeMillis());
+        if (user instanceof LoginUserVO) {
+            LoginUserVO loginUserVO = (LoginUserVO) user;
+            if (ObjectUtils.isNotEmpty(loginUserVO.getId())) {
+                claims.put("userId", loginUserVO.getId());
+            }
+            if (ObjectUtils.isNotEmpty(loginUserVO.getUserRole())) {
+                claims.put("userRole", loginUserVO.getUserRole());
+            }
+        } else if (user instanceof User) {
+            User loginUser = (User) user;
+            if (ObjectUtils.isNotEmpty(loginUser.getId())) {
+                claims.put("userId", loginUser.getId());
+            }
+            if (ObjectUtils.isNotEmpty(loginUser.getUserRole())) {
+                claims.put("userRole", loginUser.getUserRole());
+            }
+        }
         // 要存储的数据
         return Jwts.builder().addClaims(claims)
                 // 过期时间

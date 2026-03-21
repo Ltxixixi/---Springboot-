@@ -7,6 +7,7 @@ import com.xiaobaitiao.springbootinit.common.ErrorCode;
 import com.xiaobaitiao.springbootinit.exception.ThrowUtils;
 import com.xiaobaitiao.springbootinit.model.dto.tourismAgent.TourismMultiAgentRequest;
 import com.xiaobaitiao.springbootinit.model.entity.Spot;
+import com.xiaobaitiao.springbootinit.model.vo.SpotRoutePlanDayVO;
 import com.xiaobaitiao.springbootinit.model.vo.SpotRoutePlanVO;
 import com.xiaobaitiao.springbootinit.model.vo.SpotVO;
 import com.xiaobaitiao.springbootinit.model.vo.TourismMultiAgentVO;
@@ -69,6 +70,10 @@ public class TourismMultiAgentServiceImpl implements TourismMultiAgentService {
         result.setRecommendationSpotList(recommendationSpotList);
         result.setRoutePlan(routePlan);
         result.setExplanationMarkdown(explanationMarkdown);
+        result.setRecommendationSummary(buildRecommendationSummary(context, recommendationSpotList));
+        result.setRouteSummary(buildRouteSummary(context, routePlan));
+        result.setRecommendationHighlightList(buildRecommendationHighlights(context, recommendationSpotList));
+        result.setRouteHighlightList(buildRouteHighlights(routePlan));
         result.setWorkflowSummary(Arrays.asList(
                 "推荐智能体：结合用户偏好、景点标签和热度筛选候选景点",
                 "规划智能体：基于候选景点生成按天路线和预算估算",
@@ -194,5 +199,76 @@ public class TourismMultiAgentServiceImpl implements TourismMultiAgentService {
         preferenceVO.setParsedTagList(CollUtil.isEmpty(context.getPreferredTagList()) ? Collections.emptyList() : context.getPreferredTagList());
         preferenceVO.setAnalysisSummary(context.getPreferenceSummary());
         return preferenceVO;
+    }
+
+    private String buildRecommendationSummary(TourismAgentContext context, List<SpotVO> recommendationSpotList) {
+        if (CollUtil.isEmpty(recommendationSpotList)) {
+            return "推荐智能体暂未命中强相关景点，已为你保留热门候选方案。";
+        }
+        List<String> summaryPartList = new ArrayList<>();
+        summaryPartList.add("共筛出" + recommendationSpotList.size() + "个优先景点");
+        if (StringUtils.isNotBlank(context.getSpotLocation())) {
+            summaryPartList.add("地区聚焦在" + context.getSpotLocation());
+        }
+        if (CollUtil.isNotEmpty(context.getPreferredTagList())) {
+            summaryPartList.add("偏好覆盖" + String.join("、", context.getPreferredTagList()));
+        }
+        summaryPartList.add("优先推荐" + recommendationSpotList.get(0).getSpotName());
+        return String.join("，", summaryPartList);
+    }
+
+    private String buildRouteSummary(TourismAgentContext context, SpotRoutePlanVO routePlan) {
+        List<String> summaryPartList = new ArrayList<>();
+        summaryPartList.add("已生成" + routePlan.getTotalDays() + "天路线");
+        summaryPartList.add("包含" + routePlan.getTotalSpotCount() + "个景点");
+        summaryPartList.add("预估总花费约" + routePlan.getTotalEstimatedCost().stripTrailingZeros().toPlainString() + "元");
+        if (CollUtil.isNotEmpty(routePlan.getSpotNameList())) {
+            summaryPartList.add("路线起点建议为" + routePlan.getSpotNameList().get(0));
+        }
+        if (StringUtils.isNotBlank(context.getSpotLocation())) {
+            summaryPartList.add("整体围绕" + context.getSpotLocation() + "展开");
+        }
+        return String.join("，", summaryPartList);
+    }
+
+    private List<String> buildRecommendationHighlights(TourismAgentContext context, List<SpotVO> recommendationSpotList) {
+        if (CollUtil.isEmpty(recommendationSpotList)) {
+            return Collections.singletonList("当前结果以景点热度和基础评分为主。");
+        }
+        List<String> highlightList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(context.getPreferredTagList())) {
+            highlightList.add("优先匹配标签：" + String.join("、", context.getPreferredTagList()));
+        }
+        if (StringUtils.isNotBlank(context.getSpotLocation())) {
+            highlightList.add("优先筛选地区：" + context.getSpotLocation());
+        }
+        highlightList.add("Top1 景点：" + recommendationSpotList.get(0).getSpotName() + "，理由：" +
+                StringUtils.defaultIfBlank(recommendationSpotList.get(0).getRecommendReason(), "综合表现最佳"));
+        if (recommendationSpotList.size() > 1) {
+            highlightList.add("备选景点组合：" + recommendationSpotList.stream()
+                    .limit(3)
+                    .map(SpotVO::getSpotName)
+                    .collect(Collectors.joining(" -> ")));
+        }
+        return highlightList;
+    }
+
+    private List<String> buildRouteHighlights(SpotRoutePlanVO routePlan) {
+        List<String> highlightList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(routePlan.getMatchedTagList())) {
+            highlightList.add("路线匹配标签：" + String.join("、", routePlan.getMatchedTagList()));
+        }
+        if (CollUtil.isNotEmpty(routePlan.getDayPlanList())) {
+            highlightList.add("按天拆分为" + routePlan.getDayPlanList().size() + "段行程，便于落地执行");
+            SpotRoutePlanDayVO firstDayPlan = routePlan.getDayPlanList().get(0);
+            if (CollUtil.isNotEmpty(firstDayPlan.getSpotNameList())) {
+                highlightList.add("首日建议：" + String.join(" -> ", firstDayPlan.getSpotNameList()));
+            }
+        }
+        if (CollUtil.isNotEmpty(routePlan.getSpotDistanceList())) {
+            Double totalDistance = routePlan.getSpotDistanceList().stream().reduce(0D, Double::sum);
+            highlightList.add("预估总移动里程约" + String.format("%.2f", totalDistance) + "公里");
+        }
+        return highlightList;
     }
 }

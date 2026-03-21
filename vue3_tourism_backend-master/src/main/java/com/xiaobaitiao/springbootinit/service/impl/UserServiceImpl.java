@@ -1,6 +1,8 @@
 package com.xiaobaitiao.springbootinit.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.xiaobaitiao.springbootinit.common.JwtKit;
+import com.xiaobaitiao.springbootinit.common.JwtProperties;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xiaobaitiao.springbootinit.common.ErrorCode;
@@ -21,7 +23,10 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,6 +47,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 盐值，混淆密码
      */
     public static final String SALT = "xiaobaitiao";
+    private static final Pattern USER_ID_PATTERN = Pattern.compile("id=(\\d+)");
+
+    @Resource
+    private JwtKit jwtKit;
+
+    @Resource
+    private JwtProperties jwtProperties;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -153,15 +165,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 先判断是否已登录
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) userObj;
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        if (currentUser != null && currentUser.getId() != null) {
+            // 从数据库查询（追求性能的话可以注释，直接走缓存）
+            long userId = currentUser.getId();
+            currentUser = this.getById(userId);
+            if (currentUser != null) {
+                return currentUser;
+            }
         }
-        // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        currentUser = this.getById(userId);
+        currentUser = getLoginUserByToken(request);
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
+        request.getSession().setAttribute(USER_LOGIN_STATE, currentUser);
         return currentUser;
     }
 
@@ -176,12 +192,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 先判断是否已登录
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) userObj;
-        if (currentUser == null || currentUser.getId() == null) {
-            return null;
+        if (currentUser != null && currentUser.getId() != null) {
+            // 从数据库查询（追求性能的话可以注释，直接走缓存）
+            long userId = currentUser.getId();
+            currentUser = this.getById(userId);
+            if (currentUser != null) {
+                return currentUser;
+            }
         }
-        // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        return this.getById(userId);
+        currentUser = getLoginUserByToken(request);
+        if (currentUser != null) {
+            request.getSession().setAttribute(USER_LOGIN_STATE, currentUser);
+        }
+        return currentUser;
     }
 
     /**
@@ -192,9 +215,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean isAdmin(HttpServletRequest request) {
-        // 仅管理员可查询
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User user = (User) userObj;
+        User user = getLoginUserPermitNull(request);
         return isAdmin(user);
     }
 
@@ -269,5 +290,51 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    private User getLoginUserByToken(HttpServletRequest request) {
+        try {
+            String authorization = request.getHeader(jwtProperties.getTokenHeader());
+            if (StringUtils.isBlank(authorization)) {
+                return null;
+            }
+            String prefix = jwtProperties.getTokenHead() + " ";
+            String token = authorization.startsWith(prefix) ? authorization.substring(prefix.length()) : authorization;
+            if (StringUtils.isBlank(token)) {
+                return null;
+            }
+            io.jsonwebtoken.Claims claims = jwtKit.parseJwtToken(token);
+            Long userId = parseUserId(claims);
+            if (userId == null || userId <= 0) {
+                return null;
+            }
+            return this.getById(userId);
+        } catch (Exception e) {
+            log.warn("resolve login user by token failed", e);
+            return null;
+        }
+    }
+
+    private Long parseUserId(io.jsonwebtoken.Claims claims) {
+        if (claims == null) {
+            return null;
+        }
+        Object userIdObj = claims.get("userId");
+        if (userIdObj instanceof Number) {
+            return ((Number) userIdObj).longValue();
+        }
+        if (userIdObj instanceof String && StringUtils.isNumeric((String) userIdObj)) {
+            return Long.valueOf((String) userIdObj);
+        }
+        // 兼容旧 token：username 是 LoginUserVO.toString()，例如 LoginUserVO(id=123,...)
+        String username = claims.get("username", String.class);
+        if (StringUtils.isBlank(username)) {
+            return null;
+        }
+        Matcher matcher = USER_ID_PATTERN.matcher(username);
+        if (matcher.find()) {
+            return Long.valueOf(matcher.group(1));
+        }
+        return null;
     }
 }

@@ -32,6 +32,26 @@ public class TourismMultiAgentVO implements Serializable {
     private String explanationMarkdown;
 
     /**
+     * 推荐摘要
+     */
+    private String recommendationSummary;
+
+    /**
+     * 路线摘要
+     */
+    private String routeSummary;
+
+    /**
+     * 推荐亮点
+     */
+    private List<String> recommendationHighlightList;
+
+    /**
+     * 路线亮点
+     */
+    private List<String> routeHighlightList;
+
+    /**
      * 协作流程摘要
      */
     private List<String> workflowSummary;
