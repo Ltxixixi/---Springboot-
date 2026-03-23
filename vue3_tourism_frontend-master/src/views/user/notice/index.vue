@@ -45,7 +45,7 @@ const getNoticeList = async () => {
       current: 1,
       pageSize: 15
     });
-    noticeList.value = res.data.records;
+    noticeList.value = res?.data?.records || [];
     loading.value = false;
   } catch (error) {
     loading.value = false;

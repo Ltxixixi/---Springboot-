@@ -181,8 +181,8 @@ public class SpotController {
                                                        HttpServletRequest request) {
         long current = spotQueryRequest.getCurrent();
         long size = spotQueryRequest.getPageSize();
-        // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 前台景点量已经扩充，适当放宽列表页一次查询上限
+        ThrowUtils.throwIf(size > 200, ErrorCode.PARAMS_ERROR);
         // 查询数据库
         Page<Spot> spotPage = spotService.page(new Page<>(current, size),
                 spotService.getQueryWrapper(spotQueryRequest));
@@ -206,8 +206,7 @@ public class SpotController {
         spotQueryRequest.setAdminId(loginUser.getId());
         long current = spotQueryRequest.getCurrent();
         long size = spotQueryRequest.getPageSize();
-        // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > 200, ErrorCode.PARAMS_ERROR);
         // 查询数据库
         Page<Spot> spotPage = spotService.page(new Page<>(current, size),
                 spotService.getQueryWrapper(spotQueryRequest));

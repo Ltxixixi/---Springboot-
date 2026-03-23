@@ -21,7 +21,25 @@ request.interceptors.request.use((config) => {
 //响应拦截器
 request.interceptors.response.use(
   (response) => {
-    return response.data;
+    const payload = response.data;
+    // 后端拦截器在未登录时可能返回 { status: 401, msg: "..." } 且 HTTP 仍是 200
+    // 这里统一转成 reject，避免业务页面直接读取 res.data.records 报错
+    if (
+      payload &&
+      typeof payload === "object" &&
+      Number(payload.status) === 401
+    ) {
+      return Promise.reject({
+        response: {
+          status: 401,
+          data: {
+            message: payload.msg || "未登录"
+          }
+        },
+        message: payload.msg || "未登录"
+      });
+    }
+    return payload;
   },
   (error) => {
     let msg = "";

@@ -222,10 +222,12 @@ const fetchRouteList = async () => {
   try {
     const response = await listSpotRouteVoByPageUsingPost({
       current: currentPage.value,
-      pageSize: pageSize.value
+      pageSize: pageSize.value,
+      sortField: "id",
+      sortOrder: "descend"
     });
-    routeList.value = response.data.records;
-    total.value = response.data.total;
+    routeList.value = response?.data?.records || [];
+    total.value = response?.data?.total || 0;
   } catch (error: any) {
     ElMessage.error(error?.message || "获取路线列表失败");
   }
