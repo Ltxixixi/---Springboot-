@@ -172,13 +172,22 @@
               >
                 <div class="day-header">
                   <span class="day-title">第 {{ day.dayNumber }} 天</span>
-                  <span class="day-cost"
-                    >约 {{ day.estimatedCost || 0 }} 元</span
-                  >
+                  <div class="day-header-side">
+                    <span class="day-intensity">{{
+                      day.intensityLevel || "适中"
+                    }}</span>
+                    <span class="day-cost"
+                      >约 {{ day.estimatedCost || 0 }} 元</span
+                    >
+                  </div>
                 </div>
                 <div class="day-route">{{ day.routeDescription }}</div>
-                <div class="day-distance">
-                  预计里程 {{ formatDistance(day.totalDistance) }}
+                <div class="day-distance-grid">
+                  <div>预计里程 {{ formatDistance(day.totalDistance) }}</div>
+                  <div>
+                    游玩时长
+                    {{ formatDuration(day.totalVisitDurationMinutes) }}
+                  </div>
                 </div>
                 <div class="day-spot-list">
                   <span
@@ -188,6 +197,36 @@
                   >
                     {{ spotName }}
                   </span>
+                </div>
+                <div
+                  v-if="day.timeBlockList && day.timeBlockList.length"
+                  class="day-time-blocks"
+                >
+                  <div
+                    v-for="block in day.timeBlockList"
+                    :key="`${day.dayNumber}-${block.blockKey}`"
+                    class="day-time-block"
+                  >
+                    <div class="day-time-block-label">
+                      {{ block.blockLabel }}
+                    </div>
+                    <div class="day-time-block-summary">
+                      {{ block.summary }}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  v-if="day.scheduleLineList && day.scheduleLineList.length"
+                  class="day-schedule"
+                >
+                  <div class="day-schedule-title">时间轴安排</div>
+                  <div
+                    v-for="(line, index) in day.scheduleLineList"
+                    :key="`${day.dayNumber}-schedule-${index}`"
+                    class="day-schedule-item"
+                  >
+                    {{ line }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -280,8 +319,17 @@ interface DayPlan {
   dayNumber: number;
   estimatedCost?: number | string;
   totalDistance?: number;
+  totalVisitDurationMinutes?: number;
   routeDescription?: string;
   spotNameList?: string[];
+  scheduleLineList?: string[];
+  timeBlockList?: {
+    blockKey?: string;
+    blockLabel?: string;
+    summary?: string;
+    scheduleLineList?: string[];
+  }[];
+  intensityLevel?: string;
 }
 
 interface HistoryMessageRecord {
@@ -329,6 +377,21 @@ const formatDistance = (distance?: number) => {
     return "0.00 km";
   }
   return `${distance.toFixed(2)} km`;
+};
+
+const formatDuration = (minutes?: number) => {
+  if (!minutes) {
+    return "0 小时";
+  }
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  if (hour <= 0) {
+    return `${minute} 分钟`;
+  }
+  if (minute === 0) {
+    return `${hour} 小时`;
+  }
+  return `${hour} 小时 ${minute} 分钟`;
 };
 
 const loadHistoryMessages = async () => {
@@ -864,10 +927,25 @@ onMounted(async () => {
   align-items: center;
 }
 
+.day-header-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .day-title {
   font-size: 18px;
   font-weight: 700;
   color: #19334b;
+}
+
+.day-intensity {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(29, 78, 216, 0.1);
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .day-cost {
@@ -881,8 +959,10 @@ onMounted(async () => {
   line-height: 1.7;
 }
 
-.day-distance {
+.day-distance-grid {
   margin-top: 10px;
+  display: grid;
+  gap: 4px;
   font-size: 13px;
   color: #6a8298;
 }
@@ -892,6 +972,53 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+
+.day-time-blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.day-time-block {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(247, 251, 255, 0.92);
+  border: 1px solid rgba(92, 143, 255, 0.14);
+}
+
+.day-time-block-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #27517f;
+}
+
+.day-time-block-summary {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #4b627a;
+}
+
+.day-schedule {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.day-schedule-title {
+  color: #315b8a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.day-schedule-item {
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #40566d;
+  font-size: 13px;
 }
 
 .day-spot {
