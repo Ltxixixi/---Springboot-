@@ -72,5 +72,15 @@ public class SpotRoutePlanVO implements Serializable {
      */
     private List<SpotRoutePlanDayVO> dayPlanList;
 
+    /**
+     * 微调说明
+     */
+    private String adjustmentSummary;
+
+    /**
+     * 改线理解结果
+     */
+    private RouteAdjustmentAnalysisVO adjustmentAnalysis;
+
     private static final long serialVersionUID = 1L;
 }

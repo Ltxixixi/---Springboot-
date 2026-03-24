@@ -11,6 +11,7 @@ import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -49,6 +50,32 @@ public class SpotVO implements Serializable {
      * 景点介绍
      */
     private String spotDescription;
+
+    /**
+     * 景点纬度
+     */
+    private BigDecimal latitude;
+
+    /**
+     * 景点经度
+     */
+    private BigDecimal longitude;
+
+    /**
+     * 建议游玩时长（分钟）
+     */
+    private Integer visitDurationMinutes;
+
+    /**
+     * 开放时间，格式 HH:mm
+     */
+    private String openTime;
+
+    /**
+     * 关闭时间，格式 HH:mm
+     */
+    private String closeTime;
+
     /**
      * 景点标签（JSON字符串数组）
      */
@@ -72,6 +99,11 @@ public class SpotVO implements Serializable {
      * 推荐理由
      */
     private String recommendReason;
+
+    /**
+     * 推荐游玩时段
+     */
+    private String recommendedTimeBlock;
 
     /**
      * 创建时间

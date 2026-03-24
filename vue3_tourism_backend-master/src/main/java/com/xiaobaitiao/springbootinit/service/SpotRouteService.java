@@ -2,6 +2,7 @@ package com.xiaobaitiao.springbootinit.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteAdjustRequest;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteQueryRequest;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRoutePlanRequest;
@@ -61,4 +62,13 @@ public interface SpotRouteService extends IService<SpotRoute> {
      * @return 规划结果
      */
     SpotRoutePlanVO generateRoutePlan(SpotRoutePlanRequest spotRoutePlanRequest, HttpServletRequest request);
+
+    /**
+     * 基于已有规划条件做路线微调
+     *
+     * @param spotRouteAdjustRequest 微调请求
+     * @param request 请求
+     * @return 微调后的规划结果
+     */
+    SpotRoutePlanVO adjustRoutePlan(SpotRouteAdjustRequest spotRouteAdjustRequest, HttpServletRequest request);
 }

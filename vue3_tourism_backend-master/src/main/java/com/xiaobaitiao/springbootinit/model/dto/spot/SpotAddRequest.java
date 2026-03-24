@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -37,6 +37,32 @@ public class SpotAddRequest implements Serializable {
      * 景点介绍
      */
     private String spotDescription;
+
+    /**
+     * 景点纬度
+     */
+    private BigDecimal latitude;
+
+    /**
+     * 景点经度
+     */
+    private BigDecimal longitude;
+
+    /**
+     * 建议游玩时长（分钟）
+     */
+    private Integer visitDurationMinutes;
+
+    /**
+     * 开放时间，格式 HH:mm
+     */
+    private String openTime;
+
+    /**
+     * 关闭时间，格式 HH:mm
+     */
+    private String closeTime;
+
     /**
      * 景点标签（JSON字符串数组）
      */

@@ -33,9 +33,19 @@ public class SpotRoutePlanRequest implements Serializable {
     private List<String> spotTagList;
 
     /**
+     * 排除标签
+     */
+    private List<String> excludeTagList;
+
+    /**
      * 候选景点 id 列表
      */
     private List<Long> candidateSpotIdList;
+
+    /**
+     * 行程节奏，RELAXED / NORMAL / COMPACT
+     */
+    private String paceType;
 
     private static final long serialVersionUID = 1L;
 }

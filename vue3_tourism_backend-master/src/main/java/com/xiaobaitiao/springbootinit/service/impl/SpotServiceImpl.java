@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -70,12 +71,38 @@ public class SpotServiceImpl extends ServiceImpl<SpotMapper, Spot> implements Sp
         String spotName = spot.getSpotName();
         String spotAvatar = spot.getSpotAvatar();
         String spotLocation = spot.getSpotLocation();
+        BigDecimal latitude = spot.getLatitude();
+        BigDecimal longitude = spot.getLongitude();
+        Integer visitDurationMinutes = spot.getVisitDurationMinutes();
+        String openTime = spot.getOpenTime();
+        String closeTime = spot.getCloseTime();
         // 创建数据时，参数不能为空
         if (add) {
             // todo 补充校验规则
             ThrowUtils.throwIf(StringUtils.isBlank(spotName), ErrorCode.PARAMS_ERROR);
             ThrowUtils.throwIf(StringUtils.isBlank(spotAvatar), ErrorCode.PARAMS_ERROR);
             ThrowUtils.throwIf(StringUtils.isBlank(spotLocation), ErrorCode.PARAMS_ERROR);
+        }
+        if (latitude != null) {
+            ThrowUtils.throwIf(latitude.compareTo(BigDecimal.valueOf(-90)) < 0
+                    || latitude.compareTo(BigDecimal.valueOf(90)) > 0, ErrorCode.PARAMS_ERROR, "纬度范围应在 -90 到 90 之间");
+        }
+        if (longitude != null) {
+            ThrowUtils.throwIf(longitude.compareTo(BigDecimal.valueOf(-180)) < 0
+                    || longitude.compareTo(BigDecimal.valueOf(180)) > 0, ErrorCode.PARAMS_ERROR, "经度范围应在 -180 到 180 之间");
+        }
+        ThrowUtils.throwIf(latitude == null ^ longitude == null, ErrorCode.PARAMS_ERROR, "经纬度需要同时填写");
+        if (visitDurationMinutes != null) {
+            ThrowUtils.throwIf(visitDurationMinutes <= 0 || visitDurationMinutes > 24 * 60,
+                    ErrorCode.PARAMS_ERROR, "游玩时长需在 1 到 1440 分钟之间");
+        }
+        if (StringUtils.isNotBlank(openTime)) {
+            ThrowUtils.throwIf(!openTime.matches("^([01]\\d|2[0-3]):[0-5]\\d$"),
+                    ErrorCode.PARAMS_ERROR, "开放时间格式应为 HH:mm");
+        }
+        if (StringUtils.isNotBlank(closeTime)) {
+            ThrowUtils.throwIf(!closeTime.matches("^([01]\\d|2[0-3]):[0-5]\\d$"),
+                    ErrorCode.PARAMS_ERROR, "关闭时间格式应为 HH:mm");
         }
     }
 

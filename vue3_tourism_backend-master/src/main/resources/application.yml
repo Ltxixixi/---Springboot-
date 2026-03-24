@@ -118,6 +118,19 @@ tourism:
     model: ${TOURISM_AI_MODEL:doubao-seed-1-6-251015}
     temperature: ${TOURISM_AI_TEMPERATURE:0.6}
     max-tokens: ${TOURISM_AI_MAX_TOKENS:1500}
+    # ===== AI稳定性保障配置 =====
+    # 超时时间（秒）
+    timeout-seconds: ${TOURISM_AI_TIMEOUT:30}
+    # 最大并发数
+    max-concurrent: ${TOURISM_AI_MAX_CONCURRENT:5}
+    # 每分钟最大请求数（限流）
+    max-requests-per-minute: ${TOURISM_AI_MAX_RPM:30}
+    # 最大重试次数
+    max-retries: ${TOURISM_AI_MAX_RETRIES:2}
+    # 熔断失败阈值（连续失败次数）
+    circuit-breaker-threshold: ${TOURISM_AI_CIRCUIT_THRESHOLD:5}
+    # 熔断恢复时间（秒）
+    circuit-breaker-recovery-seconds: ${TOURISM_AI_CIRCUIT_RECOVERY:60}
 # 滑动验证，底图路径，不配置将使用默认图片
 # 支持全路径
 # 支持项目路径,以classpath:开头,取resource目录下路径,例：classpath:images/jigsaw

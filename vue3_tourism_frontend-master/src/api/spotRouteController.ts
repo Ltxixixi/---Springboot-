@@ -105,10 +105,38 @@ export async function generateRoutePlanUsingPost(
     budget?: number;
     spotLocation?: string;
     spotTagList?: string[];
+    paceType?: string;
   },
   options?: { [key: string]: any }
 ) {
   return request<any>("/api/spotRoute/plan/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    data: body,
+    ...(options || {})
+  });
+}
+
+/** adjustRoutePlan POST /api/spotRoute/plan/adjust */
+export async function adjustRoutePlanUsingPost(
+  body: {
+    originalRequest: {
+      dayCount: number;
+      budget?: number;
+      spotLocation?: string;
+      spotTagList?: string[];
+      candidateSpotIdList?: number[];
+      paceType?: string;
+    };
+    adjustType?: string;
+    customInstruction?: string;
+    currentEstimatedCost?: number | string;
+  },
+  options?: { [key: string]: any }
+) {
+  return request<any>("/api/spotRoute/plan/adjust", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

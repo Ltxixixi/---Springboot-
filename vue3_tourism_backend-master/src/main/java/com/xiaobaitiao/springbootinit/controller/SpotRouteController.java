@@ -11,6 +11,7 @@ import com.xiaobaitiao.springbootinit.constant.UserConstant;
 import com.xiaobaitiao.springbootinit.exception.BusinessException;
 import com.xiaobaitiao.springbootinit.exception.ThrowUtils;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteAddRequest;
+import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteAdjustRequest;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteEditRequest;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRoutePlanRequest;
 import com.xiaobaitiao.springbootinit.model.dto.spotRoute.SpotRouteQueryRequest;
@@ -227,6 +228,20 @@ public class SpotRouteController {
                                                            HttpServletRequest request) {
         ThrowUtils.throwIf(spotRoutePlanRequest == null, ErrorCode.PARAMS_ERROR);
         return ResultUtils.success(spotRouteService.generateRoutePlan(spotRoutePlanRequest, request));
+    }
+
+    /**
+     * 微调已有路线
+     *
+     * @param spotRouteAdjustRequest 微调请求
+     * @param request 请求
+     * @return 微调后的规划结果
+     */
+    @PostMapping("/plan/adjust")
+    public BaseResponse<SpotRoutePlanVO> adjustRoutePlan(@RequestBody SpotRouteAdjustRequest spotRouteAdjustRequest,
+                                                         HttpServletRequest request) {
+        ThrowUtils.throwIf(spotRouteAdjustRequest == null, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(spotRouteService.adjustRoutePlan(spotRouteAdjustRequest, request));
     }
     // endregion
 }
