@@ -17,6 +17,7 @@ import com.xiaobaitiao.springbootinit.model.entity.User;
 import com.xiaobaitiao.springbootinit.model.entity.UserSpotFavorites;
 import com.xiaobaitiao.springbootinit.model.vo.SpotVO;
 import com.xiaobaitiao.springbootinit.service.SpotService;
+import com.xiaobaitiao.springbootinit.service.ItemCFRecommendService;
 import com.xiaobaitiao.springbootinit.service.SpotScoreService;
 import com.xiaobaitiao.springbootinit.service.UserService;
 import com.xiaobaitiao.springbootinit.utils.SqlUtils;
@@ -58,6 +59,17 @@ public class SpotServiceImpl extends ServiceImpl<SpotMapper, Spot> implements Sp
 
     @Resource
     private UserSpotFavoritesMapper userSpotFavoritesMapper;
+
+    @Resource
+    private ItemCFRecommendService itemCFRecommendService;
+
+    /**
+     * 混合推荐权重配置
+     */
+    private static final double ITEMCF_WEIGHT = 0.35;    // ItemCF协同过滤权重
+    private static final double TAG_WEIGHT = 0.35;       // 标签偏好权重
+    private static final double HOT_WEIGHT = 0.30;        // 热度权重
+
     /**
      * 校验数据
      *
@@ -196,29 +208,12 @@ public class SpotServiceImpl extends ServiceImpl<SpotMapper, Spot> implements Sp
             return Collections.emptyList();
         }
 
-        User loginUser = userService.getLoginUserPermitNull(request);
+        Map<Long, Spot> openSpotMap = openSpotList.stream()
+                .collect(Collectors.toMap(Spot::getId, s -> s, (a, b) -> a));
+
         List<SpotScore> allSpotScores = spotScoreService.list(new QueryWrapper<SpotScore>()
                 .select("spotId", "userId", "score"));
         Map<Long, Double> avgScoreMap = buildAverageScoreMap(allSpotScores);
-
-        if (loginUser == null) {
-            return buildHotSpotVOList(openSpotList, avgScoreMap, recommendSize, "热门景点推荐");
-        }
-
-        Long userId = loginUser.getId();
-        List<UserSpotFavorites> favoriteList = userSpotFavoritesMapper.selectList(new QueryWrapper<UserSpotFavorites>()
-                .eq("userId", userId)
-                .eq("status", 1));
-        List<SpotScore> userScoreList = allSpotScores.stream()
-                .filter(spotScore -> userId.equals(spotScore.getUserId()))
-                .collect(Collectors.toList());
-
-        Map<String, Double> userTagPreferenceMap = buildUserTagPreferenceMap(openSpotList, favoriteList, userScoreList);
-        Set<Long> interactedSpotIdSet = buildInteractedSpotIdSet(favoriteList, userScoreList);
-
-        if (userTagPreferenceMap.isEmpty()) {
-            return buildHotSpotVOList(openSpotList, avgScoreMap, recommendSize, "根据热门程度为你推荐");
-        }
 
         double maxViewNum = openSpotList.stream()
                 .map(Spot::getViewNum)
@@ -233,17 +228,67 @@ public class SpotServiceImpl extends ServiceImpl<SpotMapper, Spot> implements Sp
                 .max()
                 .orElse(1D);
 
+        User loginUser = userService.getLoginUserPermitNull(request);
+
+        // 未登录用户，返回热门推荐
+        if (loginUser == null) {
+            return buildHotSpotVOList(openSpotList, avgScoreMap, recommendSize, "热门景点推荐");
+        }
+
+        Long userId = loginUser.getId();
+
+        // ========== 1. 基于用户历史行为构建标签偏好 ==========
+        List<UserSpotFavorites> favoriteList = userSpotFavoritesMapper.selectList(new QueryWrapper<UserSpotFavorites>()
+                .eq("userId", userId)
+                .eq("status", 1));
+        List<SpotScore> userScoreList = allSpotScores.stream()
+                .filter(spotScore -> userId.equals(spotScore.getUserId()))
+                .collect(Collectors.toList());
+
+        Map<String, Double> userTagPreferenceMap = buildUserTagPreferenceMap(openSpotList, favoriteList, userScoreList);
+        Set<Long> interactedSpotIdSet = buildInteractedSpotIdSet(favoriteList, userScoreList);
+
+        // 无历史行为，返回热门推荐
+        if (userTagPreferenceMap.isEmpty()) {
+            return buildHotSpotVOList(openSpotList, avgScoreMap, recommendSize, "根据热门程度为你推荐");
+        }
+
+        // ========== 2. 获取 ItemCF 协同过滤推荐结果 ==========
+        List<Long> itemCFRecommendSpotIds = itemCFRecommendService.getItemCFRecommendations(userId, recommendSize * 2);
+        Map<Long, Double> itemCFScoreMap = new HashMap<>();
+        for (int i = 0; i < itemCFRecommendSpotIds.size(); i++) {
+            // 得分从高到低递减
+            itemCFScoreMap.put(itemCFRecommendSpotIds.get(i), (double) (itemCFRecommendSpotIds.size() - i));
+        }
+
+        // ========== 3. 混合评分计算 ==========
         List<RecommendSpotCandidate> candidateList = new ArrayList<>();
         for (Spot spot : openSpotList) {
             if (interactedSpotIdSet.contains(spot.getId())) {
                 continue;
             }
+            Long spotId = spot.getId();
+
+            // 标签偏好得分
             List<String> tagList = parseSpotTags(spot.getSpotTags());
-            double personalizationScore = calculatePersonalizationScore(tagList, userTagPreferenceMap);
-            double hotScore = calculateHotScore(spot, avgScoreMap.getOrDefault(spot.getId(), 0D), maxViewNum, maxFavourNum);
-            double finalScore = personalizationScore * 0.6 + hotScore * 0.4;
-            String recommendReason = buildRecommendReason(tagList, userTagPreferenceMap,
-                    avgScoreMap.getOrDefault(spot.getId(), 0D), spot, true);
+            double tagScore = calculatePersonalizationScore(tagList, userTagPreferenceMap);
+
+            // 热度得分
+            double hotScore = calculateHotScore(spot, avgScoreMap.getOrDefault(spotId, 0D), maxViewNum, maxFavourNum);
+
+            // ItemCF协同过滤得分（归一化到0-1）
+            double itemCFMaxScore = itemCFRecommendSpotIds.size();
+            double itemCFScore = (itemCFScoreMap.containsKey(spotId) && itemCFMaxScore > 0)
+                    ? itemCFScoreMap.get(spotId) / itemCFMaxScore
+                    : 0.0;
+
+            // 混合总分
+            double finalScore = itemCFScore * ITEMCF_WEIGHT + tagScore * TAG_WEIGHT + hotScore * HOT_WEIGHT;
+
+            // 构建推荐理由
+            String recommendReason = buildRecommendReason(spot, tagList, userTagPreferenceMap,
+                    avgScoreMap.getOrDefault(spotId, 0D), itemCFScoreMap.containsKey(spotId));
+
             candidateList.add(new RecommendSpotCandidate(spot, finalScore, recommendReason));
         }
 
@@ -378,28 +423,47 @@ public class SpotServiceImpl extends ServiceImpl<SpotMapper, Spot> implements Sp
         return Math.max(normalizedScore, 0D);
     }
 
-    private String buildRecommendReason(List<String> tagList,
+    private String buildRecommendReason(Spot spot,
+                                        List<String> tagList,
                                         Map<String, Double> userTagPreferenceMap,
                                         Double avgScore,
-                                        Spot spot,
-                                        boolean personalized) {
+                                        boolean hitByItemCF) {
+        StringBuilder reason = new StringBuilder();
+
+        // 优先显示协同过滤推荐理由
+        if (hitByItemCF) {
+            reason.append("相似用户也在逛 ");
+        }
+
+        // 标签匹配
         List<String> matchedTagList = tagList.stream()
                 .filter(tag -> userTagPreferenceMap.getOrDefault(tag, 0D) > 0)
                 .limit(2)
                 .collect(Collectors.toList());
-        if (personalized && CollUtil.isNotEmpty(matchedTagList)) {
-            return "匹配你偏好的" + String.join("、", matchedTagList);
+        if (CollUtil.isNotEmpty(matchedTagList)) {
+            if (reason.length() > 0) {
+                reason.append("· ");
+            }
+            reason.append("匹配你的偏好：").append(String.join("、", matchedTagList));
         }
+
+        // 评分高
         if (avgScore != null && avgScore >= 4.5) {
-            return "用户评分较高，值得优先考虑";
+            if (reason.length() > 0) {
+                reason.append("· ");
+            }
+            reason.append("评分").append(String.format("%.1f", avgScore)).append("分");
         }
+
+        // 收藏多
         if (ObjectUtils.isNotEmpty(spot.getFavourNum()) && spot.getFavourNum() >= 10) {
-            return "收藏热度较高，适合作为热门打卡点";
+            if (reason.length() > 0) {
+                reason.append("· ");
+            }
+            reason.append("收藏").append(spot.getFavourNum()).append("次");
         }
-        if (ObjectUtils.isNotEmpty(spot.getViewNum()) && spot.getViewNum() >= 20) {
-            return "浏览热度较高，近期关注度不错";
-        }
-        return personalized ? "结合你的偏好为你精选" : "热门景点推荐";
+
+        return reason.length() > 0 ? reason.toString() : "综合推荐";
     }
 
     private List<String> parseSpotTags(String spotTags) {
