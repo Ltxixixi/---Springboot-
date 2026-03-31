@@ -4,7 +4,7 @@ package com.xiaobaitiao.springbootinit.constant;
  * 用户常量
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public interface UserConstant {
 

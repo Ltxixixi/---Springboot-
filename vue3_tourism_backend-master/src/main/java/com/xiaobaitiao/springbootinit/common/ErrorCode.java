@@ -4,7 +4,7 @@ package com.xiaobaitiao.springbootinit.common;
  * 自定义错误码
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public enum ErrorCode {
 

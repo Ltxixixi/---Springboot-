@@ -15,7 +15,7 @@ import org.springframework.boot.CommandLineRunner;
  * 全量同步帖子到 es
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 // todo 取消注释开启任务
 //@Component

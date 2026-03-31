@@ -14,7 +14,7 @@ import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
  * 用户服务
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public interface UserService extends IService<User> {
 

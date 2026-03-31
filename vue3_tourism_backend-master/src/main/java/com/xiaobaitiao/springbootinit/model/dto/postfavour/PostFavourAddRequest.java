@@ -7,7 +7,7 @@ import lombok.Data;
  * 帖子收藏 / 取消收藏请求
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class PostFavourAddRequest implements Serializable {

@@ -7,7 +7,7 @@ import lombok.Data;
  * 用户注册请求体
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class UserRegisterRequest implements Serializable {

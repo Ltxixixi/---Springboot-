@@ -12,7 +12,7 @@ import lombok.Data;
  * 帖子收藏
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  **/
 @TableName(value = "post_favour")
 @Data

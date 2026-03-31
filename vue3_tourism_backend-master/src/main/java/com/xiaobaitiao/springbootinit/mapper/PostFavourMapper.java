@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Param;
  * 帖子收藏数据库操作
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public interface PostFavourMapper extends BaseMapper<PostFavour> {
 

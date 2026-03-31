@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * 事件处理器
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  **/
 @Component
 public class EventHandler implements WxMpMessageHandler {

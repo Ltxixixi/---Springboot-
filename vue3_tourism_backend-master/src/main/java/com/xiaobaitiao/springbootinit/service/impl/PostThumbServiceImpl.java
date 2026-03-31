@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 帖子点赞服务实现
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Service
 public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb>

@@ -16,7 +16,7 @@ import java.util.List;
  * 查询弹幕请求
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

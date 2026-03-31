@@ -9,7 +9,7 @@ import org.apache.commons.lang3.ObjectUtils;
  * 文件上传业务类型枚举
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public enum FileUploadBizEnum {
 

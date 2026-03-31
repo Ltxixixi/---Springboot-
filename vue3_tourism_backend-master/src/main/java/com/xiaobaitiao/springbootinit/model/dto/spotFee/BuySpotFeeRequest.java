@@ -16,7 +16,7 @@ import java.util.List;
  * 购买景点门票表请求
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class BuySpotFeeRequest implements Serializable {

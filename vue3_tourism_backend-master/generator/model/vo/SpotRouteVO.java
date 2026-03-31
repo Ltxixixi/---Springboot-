@@ -13,7 +13,7 @@ import java.util.List;
  * 景点路线表视图
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class SpotRouteVO implements Serializable {

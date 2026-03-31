@@ -16,7 +16,7 @@ import java.util.List;
  * 编辑景点订单表请求
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class SpotOrderEditRequest implements Serializable {

@@ -14,7 +14,7 @@ import java.util.List;
  * 景点表服务
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public interface SpotService extends IService<Spot> {
 

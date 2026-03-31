@@ -14,7 +14,7 @@ import lombok.Data;
  * 用户
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @TableName(value = "user")
 @Data

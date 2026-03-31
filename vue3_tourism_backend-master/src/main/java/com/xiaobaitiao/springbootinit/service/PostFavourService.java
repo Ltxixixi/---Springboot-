@@ -12,7 +12,7 @@ import com.xiaobaitiao.springbootinit.model.entity.User;
  * 帖子收藏服务
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public interface PostFavourService extends IService<PostFavour> {
 

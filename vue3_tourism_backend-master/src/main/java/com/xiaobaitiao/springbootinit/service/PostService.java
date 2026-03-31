@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
  * 帖子服务
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public interface PostService extends IService<Post> {
 

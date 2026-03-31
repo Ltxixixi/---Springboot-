@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * 用户景点收藏关联表服务实现
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Service
 @Slf4j

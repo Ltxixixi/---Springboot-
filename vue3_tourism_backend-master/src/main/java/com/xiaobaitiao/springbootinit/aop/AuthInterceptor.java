@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletRequest;
  * 权限校验 AOP
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Aspect
 @Component

@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 帖子收藏接口
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @RestController
 @RequestMapping("/post_favour")

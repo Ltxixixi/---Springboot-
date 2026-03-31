@@ -1,6 +1,6 @@
 # Docker 镜像构建
 # @author toxi
-# @from <a href="https://luoye6.github.io/"> 个人博客
+# 
 FROM maven:3.8.1-jdk-8-slim as builder
 
 # Copy local code to the container image.

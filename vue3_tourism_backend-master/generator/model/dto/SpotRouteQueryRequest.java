@@ -11,7 +11,7 @@ import java.util.List;
  * 查询景点路线表请求
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

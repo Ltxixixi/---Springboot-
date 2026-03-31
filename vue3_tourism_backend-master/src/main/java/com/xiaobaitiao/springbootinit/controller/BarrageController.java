@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletRequest;
  * 弹幕接口
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @RestController
 @RequestMapping("/barrage")

@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
  * 用户景点收藏关联表服务
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public interface UserSpotFavoritesService extends IService<UserSpotFavorites> {
 

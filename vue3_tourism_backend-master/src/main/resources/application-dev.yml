@@ -1,6 +1,6 @@
 # 公共配置文件
 # @author toxi
-# @from <a href="https://luoye6.github.io/"> 个人博客
+# 
 spring:
   application:
     name: springboot-init

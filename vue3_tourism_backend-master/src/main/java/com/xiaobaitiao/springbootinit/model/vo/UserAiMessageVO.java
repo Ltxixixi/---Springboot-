@@ -18,7 +18,7 @@ import java.util.List;
  * 用户对话表视图
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class UserAiMessageVO implements Serializable {

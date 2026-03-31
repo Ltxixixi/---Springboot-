@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletRequest;
  * 景点订单表接口
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @RestController
 @RequestMapping("/spotOrder")

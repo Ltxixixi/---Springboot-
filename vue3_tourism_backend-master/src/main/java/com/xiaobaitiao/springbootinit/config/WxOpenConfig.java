@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  * 微信开放平台配置
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Slf4j
 @Configuration

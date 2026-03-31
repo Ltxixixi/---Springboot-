@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
  * SQL 工具
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public class SqlUtils {
 

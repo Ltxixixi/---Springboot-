@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 帖子收藏服务实现
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Service
 public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFavour>

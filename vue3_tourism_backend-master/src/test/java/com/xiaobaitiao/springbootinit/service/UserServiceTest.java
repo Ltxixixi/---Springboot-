@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * 用户服务测试
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @SpringBootTest
 public class UserServiceTest {

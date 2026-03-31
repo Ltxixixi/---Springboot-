@@ -9,7 +9,7 @@ import java.util.List;
  * 更新用户景点收藏关联表请求
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class UserSpotFavoritesUpdateRequest implements Serializable {

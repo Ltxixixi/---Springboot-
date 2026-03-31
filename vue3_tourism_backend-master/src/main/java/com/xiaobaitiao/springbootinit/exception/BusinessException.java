@@ -6,7 +6,7 @@ import com.xiaobaitiao.springbootinit.common.ErrorCode;
  * 自定义异常类
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 public class BusinessException extends RuntimeException {
 

@@ -17,7 +17,7 @@ import java.util.List;
  * 弹幕视图
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class BarrageVO implements Serializable {

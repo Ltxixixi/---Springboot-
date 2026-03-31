@@ -9,7 +9,7 @@ import lombok.Data;
  * 用户视图（脱敏）
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  */
 @Data
 public class UserVO implements Serializable {

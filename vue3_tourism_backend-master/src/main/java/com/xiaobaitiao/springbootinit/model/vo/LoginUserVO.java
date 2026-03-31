@@ -8,7 +8,7 @@ import lombok.Data;
  * 已登录用户视图（脱敏）
  *
  * @author toxi
- * @from <a href="https://luoye6.github.io/"> 个人博客
+ * 
  **/
 @Data
 public class LoginUserVO implements Serializable {
